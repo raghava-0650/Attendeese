@@ -56,4 +56,6 @@ Real-Time Updates: Integration of technologies like Socket.io can allow real-tim
 
 Export Options: Options for exporting attendance records (e.g., CSV or PDF) to assist with offline analysis or sharing.
 
+---
+
 --------------------------------------------------------------------------------------------------------------------
