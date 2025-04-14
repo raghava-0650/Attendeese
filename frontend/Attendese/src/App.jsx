@@ -1,13 +1,11 @@
 import React from 'react';
 
-import Login from './pages/Login.jsx';
-import Signup from './pages/Signup.jsx';
+import Landingpage from './pages/Landingpage.jsx';
 
 const App = () => {
   return (
     <div>
-      <Signup />
-      <Login />
+      <Landingpage />
     </div>
   )
 }
