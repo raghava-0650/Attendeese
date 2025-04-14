@@ -24,6 +24,7 @@ const Login = () => {
                     </div>
                     <div className='!mt-12'>
                         <button type="submit" className='w-full py-2 px-4 text-[15px] font-medium tracking-wide rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none'>Login</button>
+                        <p className="text-sm !mt-6 text-center text-slate-500">Don't have an account <a href="javascript:void(0);" className="text-blue-600 font-medium hover:underline ml-1 whitespace-nowrap">signup here</a></p>
                     </div>
                     
                 </form>
