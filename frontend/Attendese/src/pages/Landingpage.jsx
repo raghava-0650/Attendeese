@@ -3,8 +3,43 @@ import React from 'react';
 const Landingpage = () => {
   return (
     <div>
-        <header>
-
+        <header class="fixed w-full">
+            <nav class="bg-white border-gray-200 py-3 dark:bg-gray-900">
+                <div class="flex flex-wrap items-center justify-between max-w-screen-xl px-4 mx-auto">
+                    <a href="#" class="flex items-center">
+                        <img src="https://sdmntprsouthcentralus.oaiusercontent.com/files/00000000-3d1c-61f7-b406-d83e08f1c8d8/raw?se=2025-04-15T15%3A12%3A45Z&sp=r&sv=2024-08-04&sr=b&scid=bf618be7-d982-5626-9f61-f57a883a2987&skoid=ae70be19-8043-4428-a990-27c58b478304&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-04-15T08%3A46%3A12Z&ske=2025-04-16T08%3A46%3A12Z&sks=b&skv=2024-08-04&sig=ehiS172QsuEdLP4o1fxaDKLGBAq/NAXp7s1V7dxXGaE%3D" class="h-6 mr-3 sm:h-9" alt="Landwind Logo" />
+                        <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Attendeese</span>
+                    </a>
+                    <div class="flex items-center lg:order-2">
+                        <a href="#" target="_blank" class="text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 sm:mr-2 lg:mr-0 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800">
+                            Login
+                        </a>
+                    </div>
+                    <div class="items-center justify-between hidden w-full lg:flex lg:w-auto lg:order-1" id="mobile-menu-2">
+                        <ul class="flex flex-col mt-4 font-medium lg:flex-row lg:space-x-8 lg:mt-0">
+                            <li>
+                                <a href="#"
+                                    class="block py-2 pl-3 pr-4 text-white bg-purple-700 rounded lg:bg-transparent lg:text-purple-700 lg:p-0 dark:text-white"
+                                    aria-current="page">Home</a>
+                            </li>
+                            
+                            
+                            <li>
+                                <a href="#"
+                                    class="block py-2 pl-3 pr-4 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-purple-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700">Features</a>
+                            </li>
+                            <li>
+                                <a href="#"
+                                    class="block py-2 pl-3 pr-4 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-purple-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700">Team</a>
+                            </li>
+                            <li>
+                                <a href="#"
+                                    class="block py-2 pl-3 pr-4 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-purple-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700">Contact</a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
         </header>
 
         <section className='bg-white-300 h-screen'>
@@ -17,9 +52,9 @@ const Landingpage = () => {
                         this is a free open source attendence tracking application the will track and manage your attendenceand it will also keep your attendence above 75% so you can get your certificate easily.
                     </p>
                     <div className='flex justify-center flex-wrap gap-4'>
-                        <a className='inline-flex items-center justify-center w-full px-0 py-0 mb-2 mr-2 text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:w-auto focus:outline-none hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700'>
-                            <button type="submit" className="w-full shadow-xl py-2.5 px-4 text-[15px] font-medium tracking-wide rounded-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none">Signup</button>
-                        </a>
+                        <a href='#' target="_blank" class="text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 sm:mr-2 lg:mr-0 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800">
+                            Signup    
+                         </a>
                     </div>
                     
                 </div>
