@@ -1,13 +1,26 @@
 import React from 'react';
 
-import Landingpage from './pages/Landingpage.jsx';
+import {
+  BrowserRouter,
+  Route,
+  Routes,
+} from 'react-router-dom';
+
+import Landingpage from './pages/Landingpage';
+import Login from './pages/Login';
+import Signup from './pages/Signup';
 
 const App = () => {
   return (
-    <div>
-      <Landingpage />
-    </div>
-  )
-}
+    <BrowserRouter>
+      <Routes>
+        <Route path='/' element={<Landingpage />} />
+        <Route path='/landingpage' element={<Landingpage />} />
+        <Route path='/signup' element={<Signup />} />
+        <Route path='/login' element={<Login />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
 
-export default App
+export default App;
