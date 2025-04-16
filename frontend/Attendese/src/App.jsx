@@ -9,6 +9,7 @@ import {
 import Landingpage from './pages/Landingpage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
+import Subjects from './pages/Subjects';
 
 const App = () => {
   return (
@@ -18,6 +19,7 @@ const App = () => {
         <Route path='/landingpage' element={<Landingpage />} />
         <Route path='/signup' element={<Signup />} />
         <Route path='/login' element={<Login />} />
+        <Route path='/Subjects' element={<Subjects />} />
       </Routes>
     </BrowserRouter>
   );
