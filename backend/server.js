@@ -1,41 +1,56 @@
-import dotenv from 'dotenv';
-dotenv.config();
+const express = require('express');
+const cors = require('cors');
+require('dotenv').config()
 
-import express from 'express';
-import mongoose from 'mongoose';
-import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const mongoose = require('mongoose')
 
-// Initialize express app
+const { SubjectsModel } = require('./db');
+
+// Define routes (you will create detailed routes next)
+
+
 const app = express();
-
-// Get __dirname in ES module scope
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Serve static frontend files
-app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Middleware
 app.use(express.json());
 app.use(cors());
 
-// MongoDB connection
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+// Connect to MongoDB
+mongoose.connect(process.env.MONGO_URI,  {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+    .then(() => { // A promise fires when complete
+      
+    })
+    .catch((error) => {  // catch error and log it in console
+        console.log(error)
+    })
+    
+// Simple test route to insert subjects
+app.post('/subjects', async (req, res) => {
+  try {
+    
+    // Consider using "hourDuration" if that's what your schema expects
+    const { name, attended, absent, hourDuration, note } = req.body;
 
-// Routes
-import attendanceRoutes from './routes/attendance.js';
-app.use('/api/attendance', attendanceRoutes);
+    const insertedSubjects = await SubjectsModel.insertMany([{
+      name,
+      attended,
+      absent,
+      hourDuration,
+      note,
+    }]);
 
-// Start server
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+    res.status(201).json(insertedSubjects);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 });
+
+
+
+
+app.listen(process.env.PORT, () => {
+  console.log ('Listening on port', process.env.PORT)
+})

@@ -1,5 +1,7 @@
 // backend/models/Attendance.js
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
+
 
 const AttendanceSchema = new mongoose.Schema({
   studentName: { type: String, required: true },

@@ -1,61 +1,3 @@
-import { auth, db } from "../firebase";
-
-import { signOut } from 'firebase/auth';
-
-<button
-  onClick={() => {
-    signOut(auth).then(() => {
-      window.location.href = "/Login"; // ✅ Route to Login page
-    });
-  }}
-  className="text-white bg-red-500 hover:bg-red-600 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-4 py-2 ml-4"
->
-  Logout
-</button>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import React from 'react';
 
 import { Link } from 'react-router-dom';
@@ -81,9 +23,9 @@ const Landingpage = () => {
                 </div>
             </Link>
             <div className="flex items-center lg:order-2">
-              <Link to="/Signup">
+              <Link to="/login">
                 <button className="text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 sm:mr-2 lg:mr-0 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800">
-                  Signup
+                  Login
                 </button>
               </Link>
             </div>
@@ -134,9 +76,9 @@ const Landingpage = () => {
               this is a free open source attendence tracking application that will track and manage your attendence and it will also keep your attendence above 75% so you can get your certificate easily.
             </p>
             <div className="flex justify-center flex-wrap gap-4">
-                <Link to="/Login">
+                <Link to="/subjects">
                     <button className="text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 sm:mr-2 lg:mr-0 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800">
-                     Login
+                     Signup
                     </button>
                 </Link>
             </div>
