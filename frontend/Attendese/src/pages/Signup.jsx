@@ -1,9 +1,17 @@
 // src/pages/Signup.jsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { auth, db } from '../firebase'; // adjust the path if needed
+
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import {
+  doc,
+  setDoc,
+} from 'firebase/firestore';
+import { useNavigate } from 'react-router-dom';
+
+import {
+  auth,
+  db,
+} from '../firebase'; // adjust the path if needed
 
 const Signup = () => {
   const [email, setEmail] = useState('');
@@ -25,7 +33,7 @@ const Signup = () => {
       });
 
       alert('Signup successful!');
-      navigate('/Subjects');
+      navigate('/subjects');
     } catch (error) {
       setErrormsg(error.message);
     }

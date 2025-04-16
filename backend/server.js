@@ -2,8 +2,8 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config()
 
-const mongoose = require('mongoose')
-
+const mongoose = require('mongoose');
+const verifyFirebaseToken = require('./middlewares/verifyFirebaseToken');
 const { SubjectsModel } = require('./db');
 
 // Define routes (you will create detailed routes next)
@@ -28,18 +28,21 @@ mongoose.connect(process.env.MONGO_URI,  {
     })
     
 // Simple test route to insert subjects
-app.post('/subjects', async (req, res) => {
+app.post('/subjects',verifyFirebaseToken, async (req, res) => {
+  //firebase-admin is to verify the idtoken sent by itself
   try {
     
     // Consider using "hourDuration" if that's what your schema expects
     const { name, attended, absent, hourDuration, note } = req.body;
 
-    const insertedSubjects = await SubjectsModel.insertMany([{
+    const insertedSubjects = await SubjectsModel.create([{
       name,
       attended,
       absent,
       hourDuration,
       note,
+
+      createdBy: req.user.uid
     }]);
 
     res.status(201).json(insertedSubjects);
@@ -47,6 +50,7 @@ app.post('/subjects', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 
 
 
