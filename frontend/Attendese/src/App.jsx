@@ -10,7 +10,7 @@ import Landingpage from './pages/Landingpage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Subjects from './pages/Subjects';
-
+import Timetable from './pages/Timetable';
 const App = () => {
   return (
     <BrowserRouter>
@@ -19,6 +19,7 @@ const App = () => {
         <Route path='/signup' element={<Signup />} />
         <Route path='/login' element={<Login />} />
         <Route path='/subjects' element={<Subjects />} />
+        <Route path='/timetable' element={<Timetable/>}/>
       </Routes>
     </BrowserRouter>
   );
