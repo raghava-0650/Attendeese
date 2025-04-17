@@ -36,15 +36,20 @@ const Subjects = () => {
     let totalAttendedHours = 0;
     let totalClassesHours = 0;
     subjects.forEach((subj) => {
-      totalAttendedHours += subj.attended * subj.hourDuration;
-      totalClassesHours += (subj.attended + subj.absent) * subj.hourDuration;
+      const attended = parseFloat(subj.attended || 0);
+      const absent = parseFloat(subj.absent || 0);
+      const hour = parseFloat(subj.hourDuration || 1);
+      totalAttendedHours += attended * hour;
+      totalClassesHours += (attended + absent) * hour;
     });
-    const totalPercentage = calculateAttendancePercentage(
-      totalAttendedHours,
-      totalClassesHours - totalAttendedHours,
-    );
+  
+    const totalPercentage = totalClassesHours === 0 
+      ? 0 
+      : ((totalAttendedHours / totalClassesHours) * 100).toFixed(2);
+  
     return { totalAttendedHours, totalClassesHours, totalPercentage };
   };
+  
 
   // Determine color based on attendance percentage
   const getColor = (percentage) => {
@@ -63,11 +68,11 @@ const Subjects = () => {
       name: subjectName,
       attended: attendedCount,
       absent: absentCount,
-      //total: attendedCount + absentCount,
+      total: attendedCount + absentCount,  // ✅ Add this line
       hourDuration: hourDuration ? parseFloat(hourDuration) : 1,
       note: note.trim(),
     };
-
+    
 
     try {
 
