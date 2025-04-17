@@ -1,16 +1,16 @@
 // frontend/firebase.js
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeApp } from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
-    apiKey: "AIzaSyBoKhFlywPjbmc4fHFHs--suGNJakcJSyQ",
-    authDomain: "attendease5426.firebaseapp.com",
-    projectId: "attendease5426",
-    storageBucket: "attendease5426.firebasestorage.app",
-    messagingSenderId: "807870242738",
-    appId: "1:807870242738:web:8bd60838cae2a9e1644eab",
-    measurementId: "G-C1H42N9CXE"
+    apiKey: "AIzaSyDDQWg2ezULlkng02i8saaBOEkpSyNPhJ0",
+    authDomain: "attendeese-app.firebaseapp.com",
+    projectId: "attendeese-app",
+    storageBucket: "attendeese-app.firebasestorage.app",
+    messagingSenderId: "643706535780",
+    appId: "1:643706535780:web:ce3106e6bffa74b6b64471",
+    measurementId: "G-H1KMDYZX73"
   };
 
 

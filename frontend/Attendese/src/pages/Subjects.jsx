@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 
 import axios from 'axios';
+import { getAuth } from 'firebase/auth';
+
+const auth = getAuth();  
 
 const Subjects = () => {
   const [subjectName, setSubjectName] = useState("");
@@ -39,7 +42,6 @@ const Subjects = () => {
     const totalPercentage = calculateAttendancePercentage(
       totalAttendedHours,
       totalClassesHours - totalAttendedHours,
-      1
     );
     return { totalAttendedHours, totalClassesHours, totalPercentage };
   };
@@ -65,12 +67,25 @@ const Subjects = () => {
       hourDuration: hourDuration ? parseFloat(hourDuration) : 1,
       note: note.trim(),
     };
+
+
     try {
+
+      if (!auth.currentUser) {
+        throw new Error("You must be signed in to add a subject.");
+      }
+    
+      // 2️⃣ Grab a fresh Firebase ID token
+      const idToken = await auth.currentUser.getIdToken(/* forceRefresh= */ true);
+    
+
       const response = await axios.post('http://localhost:4000/subjects', newSubject, {
         headers: {
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${idToken}`
         }
-      });
+      },
+      );
+
       console.log("Response:", response.data);
     } catch (error) {
       if (error.response) {

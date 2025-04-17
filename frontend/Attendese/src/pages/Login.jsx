@@ -1,8 +1,13 @@
 // src/pages/Login.jsx
 import React, { useState } from 'react';
-import { auth } from '../firebase'; // adjust path based on your file structure
+
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import { useNavigate } from 'react-router-dom';
+import {
+  Link,
+  useNavigate,
+} from 'react-router-dom';
+
+import { auth } from '../firebase'; // adjust path based on your file structure
 
 const Login = () => {
   const navigate = useNavigate();
@@ -14,7 +19,7 @@ const Login = () => {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       alert('Login successful!');
-      navigate('/Subjects'); // make sure this route exists
+      navigate('/subjects'); // make sure this route exists
     } catch (error) {
       alert('Login failed: ' + error.message);
     }
@@ -58,7 +63,7 @@ const Login = () => {
               </button>
               <p className="text-sm !mt-6 text-center text-slate-500">
                 Don't have an account?
-                <a href="/signup" className="text-blue-600 font-medium hover:underline ml-1 whitespace-nowrap">Signup here</a>
+                <Link to="/signup" className="text-blue-600 font-medium hover:underline ml-1 whitespace-nowrap">Signup here</Link>
               </p>
             </div>
           </form>
