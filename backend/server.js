@@ -67,6 +67,7 @@ app.post("/timetable",verifyFirebaseToken,async(req,res)=>{
     { days },
     { new: true, upsert: true }
   )
+  return res.json(table.days);
 });
 
 app.get("/timetable",verifyFirebaseToken,async(req,res)=>{
