@@ -1,20 +1,41 @@
 // src/pages/Home.jsx
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '../components/Layout';
 import { Check, X, Minus, RotateCcw } from 'lucide-react';
+import axios from 'axios';
+import { getAuth } from 'firebase/auth';
+
+const auth = getAuth();
 
 const Home = () => {
-  const todaySubjects = ['Math', 'Science', 'History'];
-  const subjectStats = {
-    Math: { percentage: 92.3 },
-    Science: { percentage: 84.7 },
-    History: { percentage: 75.5 },
-  };
-
+  const [todaySubjects, setTodaySubjects] = useState([]);
+  const [subjectStats, setSubjectStats] = useState({});
   const [selectedStatus, setSelectedStatus] = useState({});
+
   const todayDate = new Date().toLocaleDateString('en-IN', {
     weekday: 'long', year: 'numeric', month: 'short', day: 'numeric'
   });
+
+  useEffect(() => {
+    const fetchTodaySubjects = async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      try {
+        const token = await user.getIdToken(true);
+        const response = await axios.get('http://localhost:4000/timetable/today', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        setTodaySubjects(response.data.subjects);
+        setSubjectStats(response.data.stats);
+      } catch (error) {
+        console.error("Error fetching today's timetable:", error);
+      }
+    };
+
+    fetchTodaySubjects();
+  }, []);
 
   const handleStatusClick = (subject, status) => {
     if (status === 'clear') {
