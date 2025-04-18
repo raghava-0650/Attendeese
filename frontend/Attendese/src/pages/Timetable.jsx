@@ -18,6 +18,8 @@ const Timetable = () => {
     Saturday: [],
   });
   const [editMode, setEditMode] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [subjectToDelete, setSubjectToDelete] = useState({ day: '', subject: '' });
 
   useEffect(() => {
     const fetchSubjects = async () => {
@@ -45,8 +47,9 @@ const Timetable = () => {
     }));
   };
 
-  const handleDeleteSubjectFromDay = (day, subjectName) => {
-    const index = timetable[day].indexOf(subjectName);
+  const confirmDeleteSubject = () => {
+    const { day, subject } = subjectToDelete;
+    const index = timetable[day].indexOf(subject);
     if (index !== -1) {
       const newSubjects = [...timetable[day]];
       newSubjects.splice(index, 1);
@@ -55,6 +58,7 @@ const Timetable = () => {
         [day]: newSubjects,
       }));
     }
+    setShowConfirmModal(false);
   };
 
   const maxSubjects = Math.max(...daysOfWeek.map(day => timetable[day].length));
@@ -129,7 +133,10 @@ const Timetable = () => {
                     >
                       <span>{subject}</span>
                       <button
-                        onClick={() => handleDeleteSubjectFromDay(day, subject)}
+                        onClick={() => {
+                          setSubjectToDelete({ day, subject });
+                          setShowConfirmModal(true);
+                        }}
                         className="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-700"
                       >
                         <Trash2 size={16} />
@@ -140,6 +147,30 @@ const Timetable = () => {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {showConfirmModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-xl shadow-xl w-80 text-center">
+            <h3 className="text-lg font-semibold mb-4 text-gray-800">
+              Delete "{subjectToDelete.subject}" from {subjectToDelete.day}?
+            </h3>
+            <div className="flex justify-center space-x-4">
+              <button
+                onClick={() => setShowConfirmModal(false)}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteSubject}
+                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
