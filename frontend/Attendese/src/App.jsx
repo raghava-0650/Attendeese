@@ -11,6 +11,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Subjects from './pages/Subjects';
 import Timetable from './pages/Timetable';
+import Home from './pages/Home';
 const App = () => {
   return (
     <BrowserRouter>
@@ -20,6 +21,7 @@ const App = () => {
         <Route path='/login' element={<Login />} />
         <Route path='/subjects' element={<Subjects />} />
         <Route path='/timetable' element={<Timetable/>}/>
+        <Route path='/home' element={<Home/>}/>
       </Routes>
     </BrowserRouter>
   );

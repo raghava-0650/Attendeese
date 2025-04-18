@@ -1,38 +1,100 @@
 // src/pages/Home.jsx
 import React, { useState } from 'react';
+import Layout from '../components/Layout';
+import { Check, X, Minus, RotateCcw } from 'lucide-react';
 
 const Home = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const todaySubjects = ['Math', 'Science', 'History'];
+  const subjectStats = {
+    Math: { percentage: 92.3 },
+    Science: { percentage: 84.7 },
+    History: { percentage: 75.5 },
+  };
 
-  const handleLogin = () => {
-    // Simplified login simulation
-    setIsLoggedIn(true);
+  const [selectedStatus, setSelectedStatus] = useState({});
+  const todayDate = new Date().toLocaleDateString('en-IN', {
+    weekday: 'long', year: 'numeric', month: 'short', day: 'numeric'
+  });
+
+  const handleStatusClick = (subject, status) => {
+    if (status === 'clear') {
+      setSelectedStatus((prev) => ({ ...prev, [subject]: null }));
+    } else {
+      setSelectedStatus((prev) => ({ ...prev, [subject]: status }));
+    }
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      {!isLoggedIn ? (
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-6">Welcome to the Attendance App</h1>
-          <button 
-            onClick={handleLogin}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-          >
-            Login / Signup
-          </button>
+    <Layout>
+      <div className="p-6 min-h-screen bg-gray-100">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold text-purple-700">Today's Subjects</h1>
+          <p className="text-gray-600 text-sm font-semibold">{todayDate}</p>
         </div>
-      ) : (
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Dashboard</h2>
-          {/* Example attendance card */}
-          <div className="bg-white shadow rounded p-4">
-            <h3 className="text-xl font-semibold">Your Attendance</h3>
-            <p className="mt-2">Attendance Percentage: <span className="font-bold">85%</span></p>
-            {/* Later, you can update this with dynamic data */}
-          </div>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {todaySubjects.map((subject, idx) => (
+            <div
+              key={idx}
+              className="bg-white rounded-xl shadow-md p-5 relative border border-gray-200"
+            >
+              {/* Top Left - Percentage Circle */}
+              <div className="absolute top-3 left-3 w-12 h-12 rounded-full bg-purple-200 text-purple-900 flex items-center justify-center text-base font-bold shadow-md">
+                {subjectStats[subject]?.percentage || '0'}%
+              </div>
+
+              {/* Subject Name */}
+              <div className="text-lg font-semibold text-gray-800 text-center mb-8">
+                {subject}
+              </div>
+
+              {/* Divider Line */}
+              <hr className="my-4 border-gray-300" />
+
+              {/* Buttons */}
+              <div className="flex justify-end space-x-2">
+                <button
+                  onClick={() => handleStatusClick(subject, 'present')}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition ${
+                    selectedStatus[subject] === 'present'
+                      ? 'bg-green-500 text-white'
+                      : 'bg-green-100 hover:bg-green-200 text-green-700'
+                  }`}
+                >
+                  <Check size={16} />
+                </button>
+                <button
+                  onClick={() => handleStatusClick(subject, 'absent')}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition ${
+                    selectedStatus[subject] === 'absent'
+                      ? 'bg-red-500 text-white'
+                      : 'bg-red-100 hover:bg-red-200 text-red-700'
+                  }`}
+                >
+                  <X size={16} />
+                </button>
+                <button
+                  onClick={() => handleStatusClick(subject, 'cancelled')}
+                  className={`w-8 h-8 rounded-full flex items-center justify-center transition ${
+                    selectedStatus[subject] === 'cancelled'
+                      ? 'bg-yellow-500 text-white'
+                      : 'bg-yellow-100 hover:bg-yellow-200 text-yellow-700'
+                  }`}
+                >
+                  <Minus size={16} />
+                </button>
+                <button
+                  onClick={() => handleStatusClick(subject, 'clear')}
+                  className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center"
+                >
+                  <RotateCcw size={16} />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
-      )}
-    </div>
+      </div>
+    </Layout>
   );
 };
 
