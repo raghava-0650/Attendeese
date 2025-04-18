@@ -4,6 +4,8 @@ import Layout from '../components/Layout';
 import { Check, X, Minus, RotateCcw } from 'lucide-react';
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
+import { useLocation } from 'react-router-dom';
+import { format, parseISO } from 'date-fns';
 
 const auth = getAuth();
 
@@ -12,12 +14,14 @@ const Home = () => {
   const [subjectStats, setSubjectStats] = useState({});
   const [selectedStatus, setSelectedStatus] = useState({});
 
-  const todayDate = new Date().toLocaleDateString('en-IN', {
-    weekday: 'long', year: 'numeric', month: 'short', day: 'numeric'
-  });
+  const location = useLocation();
+
+  const queryDateString = new URLSearchParams(location.search).get('date');
+  const selectedDate = queryDateString ? parseISO(queryDateString) : new Date();
+  const formattedDisplayDate = format(selectedDate, 'EEEE, dd MMM yyyy');
 
   useEffect(() => {
-    const fetchTodaySubjects = async () => {
+    const fetchSubjects = async () => {
       const user = auth.currentUser;
       if (!user) return;
 
@@ -25,32 +29,32 @@ const Home = () => {
         const token = await user.getIdToken(true);
         const response = await axios.get('http://localhost:4000/timetable/today', {
           headers: { Authorization: `Bearer ${token}` },
+          params: { date: queryDateString } // send date to backend
         });
 
         setTodaySubjects(response.data.subjects);
         setSubjectStats(response.data.stats);
       } catch (error) {
-        console.error("Error fetching today's timetable:", error);
+        console.error("Error fetching timetable:", error);
       }
     };
 
-    fetchTodaySubjects();
-  }, []);
+    fetchSubjects();
+  }, [queryDateString]);
 
   const handleStatusClick = (subject, status) => {
-    if (status === 'clear') {
-      setSelectedStatus((prev) => ({ ...prev, [subject]: null }));
-    } else {
-      setSelectedStatus((prev) => ({ ...prev, [subject]: status }));
-    }
+    setSelectedStatus((prev) => ({
+      ...prev,
+      [subject]: status === 'clear' ? null : status
+    }));
   };
 
   return (
     <Layout>
       <div className="p-6 min-h-screen bg-gray-100">
         <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-bold text-purple-700">Today's Subjects</h1>
-          <p className="text-gray-600 text-sm font-semibold">{todayDate}</p>
+          <h1 className="text-2xl font-bold text-purple-700">Subjects</h1>
+          <p className="text-gray-600 text-sm font-semibold">{formattedDisplayDate}</p>
         </div>
 
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -59,20 +63,16 @@ const Home = () => {
               key={idx}
               className="bg-white rounded-xl shadow-md p-5 relative border border-gray-200"
             >
-              {/* Top Left - Percentage Circle */}
               <div className="absolute top-3 left-3 w-12 h-12 rounded-full bg-purple-200 text-purple-900 flex items-center justify-center text-base font-bold shadow-md">
                 {subjectStats[subject]?.percentage || '0'}%
               </div>
 
-              {/* Subject Name */}
               <div className="text-lg font-semibold text-gray-800 text-center mb-8">
                 {subject}
               </div>
 
-              {/* Divider Line */}
               <hr className="my-4 border-gray-300" />
 
-              {/* Buttons */}
               <div className="flex justify-end space-x-2">
                 <button
                   onClick={() => handleStatusClick(subject, 'present')}

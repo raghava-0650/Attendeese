@@ -12,6 +12,8 @@ import Signup from './pages/Signup';
 import Subjects from './pages/Subjects';
 import Timetable from './pages/Timetable';
 import Home from './pages/Home';
+import Calendar from './pages/Calendar';
+
 const App = () => {
   return (
     <BrowserRouter>
@@ -22,6 +24,8 @@ const App = () => {
         <Route path='/subjects' element={<Subjects />} />
         <Route path='/timetable' element={<Timetable/>}/>
         <Route path='/home' element={<Home/>}/>
+        <Route path='/calendar' element={<Calendar/>}/>
+
       </Routes>
     </BrowserRouter>
   );
