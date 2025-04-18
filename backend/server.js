@@ -4,7 +4,7 @@ require('dotenv').config()
 
 const mongoose = require('mongoose');
 const verifyFirebaseToken = require('./middlewares/verifyFirebaseToken');
-const { SubjectsModel } = require('./db');
+const { SubjectsModel,TableModel } = require('./db');
 const { messaging } = require('firebase-admin');
 
 // Define routes (you will create detailed routes next)
@@ -61,10 +61,27 @@ app.get("/subjects",verifyFirebaseToken,async(req,res)=>{
   }
 });
 
+app.post("/timetable",verifyFirebaseToken,async(req,res)=>{
+  const { days } = req.body;
+  let table = await TableModel.findOneAndUpdate({ createdBy:req.user.uid },
+    { days },
+    { new: true, upsert: true }
+  )
+});
+
+app.get("/timetable",verifyFirebaseToken,async(req,res)=>{
+  let table = await TableModel.findOne({ createdBy: req.user.uid });
+  if (!table) {
+    // if none exists yet, return empty default
+    table = await TableModel.create({ createdBy: req.user.uid });
+  }
+  res.json(table.days);
+});
+
 
 
 
 
 app.listen(process.env.PORT, () => {
   console.log ('Listening on port', process.env.PORT)
-})
+});

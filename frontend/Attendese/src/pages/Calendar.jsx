@@ -1,16 +1,20 @@
 // src/pages/Calendar.jsx
-import React, { useState, useEffect } from 'react';
-import Layout from '../components/Layout';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
 import {
-  startOfMonth,
-  endOfMonth,
+  addMonths,
   eachDayOfInterval,
+  endOfMonth,
   format,
   isToday,
-  addMonths,
+  startOfMonth,
   subMonths,
-  getDay
 } from 'date-fns';
+
+import Layout from '../components/Layout';
 
 const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -66,7 +70,7 @@ const Calendar = () => {
           </button>
 
           <h1 className="text-2xl font-bold text-center text-purple-700">
-            Attendance Calendar {format(currentDate, 'MMMM yyyy')}
+            {format(currentDate, 'MMMM yyyy')}
           </h1>
 
           <button

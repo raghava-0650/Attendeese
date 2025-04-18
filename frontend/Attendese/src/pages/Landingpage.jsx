@@ -10,7 +10,7 @@ const Landingpage = () => {
       <header className="fixed w-full">
         <nav className="bg-white border-gray-200 py-3 dark:bg-gray-900">
           <div className="flex flex-wrap items-center justify-between max-w-screen-xl px-4 mx-auto">
-            <Link to={'/landingpage'}>
+            <Link to={'/'}>
                 <div className="flex items-center">
                 <img
                     src={Logo}
@@ -37,7 +37,7 @@ const Landingpage = () => {
                   className="block py-2 pl-3 pr-4 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-purple-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700"
                      >
                       Home
-                      </Link>
+                </Link>
 
                 </li>
                 <li>
@@ -77,7 +77,7 @@ const Landingpage = () => {
               this is a free open source attendence tracking application that will track and manage your attendence and it will also keep your attendence above 75% so you can get your certificate easily.
             </p>
             <div className="flex justify-center flex-wrap gap-4">
-                <Link to="/timetable">
+                <Link to="/signup">
                     <button className="text-white bg-purple-700 hover:bg-purple-800 focus:ring-4 focus:ring-purple-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 sm:mr-2 lg:mr-0 dark:bg-purple-600 dark:hover:bg-purple-700 focus:outline-none dark:focus:ring-purple-800">
                      Signup
                     </button>

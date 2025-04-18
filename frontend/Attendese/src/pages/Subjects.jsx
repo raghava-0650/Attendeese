@@ -2,9 +2,11 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-import Layout from '../components/Layout';
+
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
+
+import Layout from '../components/Layout';
 
 const auth = getAuth();  
 
@@ -86,65 +88,49 @@ const Subjects = () => {
   };
 
   // Handle adding a new subject
-  const handleAddSubject = async() => {
+  const handleAddSubject = async () => {
     if (!subjectName.trim()) return;
-    const attendedCount = attended ? parseInt(attended) : 0;
-    const absentCount = absent ? parseInt(absent) : 0;
-    const newSubject = {
-      name: subjectName,
-      attended: attendedCount,
-      absent: absentCount,
-      total: attendedCount + absentCount,  // ✅ Add this line
-      hourDuration: hourDuration ? parseFloat(hourDuration) : 1,
+  
+    // Build the payload
+    const payload = {
+      name: subjectName.trim(),
+      attended: parseInt(attended) || 0,
+      absent:  parseInt(absent)  || 0,
+      hourDuration: parseFloat(hourDuration) || 1,
       note: note.trim(),
     };
-    
-    
-
-
+  
     try {
-
-      if (!auth.currentUser) {
-        throw new Error("You must be signed in to add a subject.");
-      }
-    
-      // 2️⃣ Grab a fresh Firebase ID token
-      const idToken = await auth.currentUser.getIdToken(/* forceRefresh= */ true);
-    
-
-      const response = await axios.post('http://localhost:4000/subjects', newSubject, {
-        headers: {
-          Authorization: `Bearer ${idToken}`
-        }
-      },
-
-      setSubjects(prev => [...prev, res.data])
+      // Ensure user’s signed in
+      const user = auth.currentUser;
+      if (!user) throw new Error("You must be signed in to add a subject.");
+      
+      // Grab fresh token
+      const token = await user.getIdToken(true);
+      
+      // POST and await the saved document
+      const res = await axios.post(
+        'http://localhost:4000/subjects',
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      console.log("Response:", response.data);
+  
+      // Append the server’s version (with its real _id)
+      setSubjects(prev => [...prev, res.data]);
+  
     } catch (error) {
-      if (error.response) {
-        console.error("Server responded with:", error.response.data);
-        console.error("Status code:", error.response.status);
-      } else if (error.request) {
-        console.error("Request was made but no response:", error.request);
-      } else {
-        console.error("Error setting up the request:", error.message);
-      }
+      console.error("Error saving subject:", error);
     }
-
-    setSubjects([...subjects, newSubject]);
+  
+    // Clear form fields
     setSubjectName("");
     setAttended("");
     setAbsent("");
     setHourDuration("");
     setNote("");
     setIsAdding(false);
-
-
-    
-
   };
+  
 
   // Handle editing a subject
   const handleEditSubject = (index) => {

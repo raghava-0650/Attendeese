@@ -1,9 +1,21 @@
 // src/components/Layout.jsx
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
 import axios from 'axios';
-import { getAuth, signOut } from 'firebase/auth';
+import {
+  getAuth,
+  signOut,
+} from 'firebase/auth';
 import { Menu } from 'lucide-react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Link,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
+
 import logo from '../assets/logo.png';
 
 const auth = getAuth();
@@ -50,10 +62,11 @@ const Layout = ({ children }) => {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate('/login');
+      navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
     }
+    alert('you are logged out');
   };
 
   const navigateTo = (path) => {
@@ -79,15 +92,17 @@ const Layout = ({ children }) => {
 
       <header className="flex items-center justify-between px-6 py-4 bg-white shadow-md relative z-50">
         <div className="flex items-center space-x-2">
-          <Menu size={24} className="text-gray-700 cursor-pointer" onClick={() => setShowSidebar(!showSidebar)} />
-          <div className="flex items-center">
-            <img src={logo} alt="Attendease Logo" className="w-8 h-8 mr-1" />
-            <h1 className="text-xl font-semibold text-purple-700">Attendease</h1>
-          </div>
+          <Menu size={24} className="text-gray-700 cursor-pointer" onClick={() => setShowSidebar(!showSidebar)} />   
+          <Link to='/'>     
+            <div className="flex items-center">
+              <img src={logo} alt="Attendease Logo" className="w-8 h-8 mr-1" />
+              <h1 className="text-xl font-semibold text-purple-700">Attendease</h1>
+            </div>
+          </Link>
         </div>
         <div className="flex items-center space-x-4">
           <div className="px-4 py-2 bg-purple-100 rounded-full text-purple-700 font-medium shadow-sm">
-            {totalAttendance !== null ? `${totalAttendance}%` : 'Loading...'}
+            {totalAttendance !== null ? `${totalAttendance}%` : 'NULL'}
           </div>
           <button
             onClick={handleLogout}

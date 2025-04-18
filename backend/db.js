@@ -3,6 +3,18 @@ const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 // const ObjectId = Schema.ObjectId;
 
+const TableSchema = new Schema({
+    days:{
+        Monday:    { type: [String], default: [] },
+        Tuesday:   { type: [String], default: [] },
+        Wednesday: { type: [String], default: [] },
+        Thursday:  { type: [String], default: [] },
+        Friday:    { type: [String], default: [] },
+        Saturday:  { type: [String], default: [] },
+    },
+    createdBy: { type: String, required: true },
+})
+
 const Subjects = new Schema({
     name:{
         type: String,
@@ -53,7 +65,10 @@ Subjects.virtual('attendancePercentage').get(function () {
 
 
 const SubjectsModel = mongoose.model('subjects',Subjects);
+const TableModel = mongoose.model('tableschema',TableSchema);
+
 
 module.exports = {
     SubjectsModel,
+    TableModel
 }
