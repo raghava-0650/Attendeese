@@ -1,5 +1,9 @@
 // src/pages/Timetable.jsx
-import React, { useState, useEffect } from 'react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 import { Trash2 } from 'lucide-react';
@@ -8,6 +12,21 @@ const auth = getAuth();
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 const Timetable = () => {
+
+  const [selectedSubject, setSelectedSubject] = useState(
+    daysOfWeek.reduce((acc, d) => ({ ...acc, [d]: '' }), {})
+  );
+  const handleAddSubjectToDay = (day, subjectName) => {
+    if (!subjectName) return;
+    setTimetable((prev) => ({
+      ...prev,
+      [day]: [...prev[day], subjectName],
+    }));
+    setSelectedSubject((prev) => ({ ...prev, [day]: '' }));
+  };
+  
+  
+
   const [allSubjects, setAllSubjects] = useState([]);
   const [timetable, setTimetable] = useState({
     Monday: [],
@@ -39,13 +58,6 @@ const Timetable = () => {
     fetchSubjects();
   }, []);
 
-  const handleAddSubjectToDay = (day, subjectName) => {
-    if (!subjectName) return;
-    setTimetable((prev) => ({
-      ...prev,
-      [day]: [...prev[day], subjectName],
-    }));
-  };
 
   const confirmDeleteSubject = () => {
     const { day, subject } = subjectToDelete;
@@ -111,9 +123,9 @@ const Timetable = () => {
               <div>
                 <h2 className="text-xl font-semibold text-purple-700 mb-3">{day}</h2>
                 <select
+                  value={selectedSubject[day]}
                   onChange={(e) => handleAddSubjectToDay(day, e.target.value)}
                   className="w-full mb-4 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  defaultValue=""
                 >
                   <option value="" disabled>
                     Select subject to add
