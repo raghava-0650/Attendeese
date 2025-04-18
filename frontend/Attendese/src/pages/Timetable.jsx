@@ -3,7 +3,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-
+import Layout from '../components/Layout';
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 import { Trash2 } from 'lucide-react';
@@ -77,6 +77,7 @@ const Timetable = () => {
   const allEmpty = maxSubjects === 0;
 
   return (
+    <Layout>
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-purple-700">Weekly Timetable</h1>
@@ -186,6 +187,8 @@ const Timetable = () => {
         </div>
       )}
     </div>
+    </Layout>
+   
   );
 };
 

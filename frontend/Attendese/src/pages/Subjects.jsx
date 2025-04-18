@@ -2,7 +2,7 @@ import React, {
   useEffect,
   useState,
 } from 'react';
-
+import Layout from '../components/Layout';
 import axios from 'axios';
 import { getAuth } from 'firebase/auth';
 
@@ -207,12 +207,13 @@ const Subjects = () => {
   const { totalAttendedHours, totalClassesHours, totalPercentage } = calculateTotalValues();
 
   return (
-    <div className="min-h-screen p-6 bg-gray-100">
+    <Layout>
+     <div className="min-h-screen p-6 bg-gray-100">
       <div className="max-w-3xl mx-auto bg-white shadow-xl rounded-2xl p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-semibold">Subjects</h1>
           <div className="flex items-center space-x-4">
-            <p className="text-gray-600">Total Attendance: {totalPercentage}%</p>
+           
             <button
               onClick={() => setIsAdding(!isAdding)}
               className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
@@ -431,6 +432,8 @@ const Subjects = () => {
         )}
       </div>
     </div>
+    </Layout>
+   
   );
 };
 
