@@ -6,13 +6,13 @@ import {
   Routes,
 } from 'react-router-dom';
 
+import Calendar from './pages/Calendar';
+import Home from './pages/Home';
 import Landingpage from './pages/Landingpage';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Subjects from './pages/Subjects';
 import Timetable from './pages/Timetable';
-import Home from './pages/Home';
-import Calendar from './pages/Calendar';
 
 const App = () => {
   return (
@@ -22,9 +22,9 @@ const App = () => {
         <Route path='/signup' element={<Signup />} />
         <Route path='/login' element={<Login />} />
         <Route path='/subjects' element={<Subjects />} />
-        <Route path='/timetable' element={<Timetable/>}/>
-        <Route path='/home' element={<Home/>}/>
-        <Route path='/calendar' element={<Calendar/>}/>
+        <Route path='/timetable' element={<Timetable />}/>
+        <Route path='/home' element={<Home />}/>
+        <Route path='/calendar' element={<Calendar />}/>
 
       </Routes>
     </BrowserRouter>

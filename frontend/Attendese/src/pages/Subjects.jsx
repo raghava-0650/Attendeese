@@ -35,7 +35,7 @@ const Subjects = () => {
         return;
       }
       try {
-        const token = await user.getIdToken(true);
+        const token = await auth.currentUser.getIdToken(true);
         const { data } = await axios.get(
           'http://localhost:4000/subjects',
           { headers: { Authorization: `Bearer ${token}` } }

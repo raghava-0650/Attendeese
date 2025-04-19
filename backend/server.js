@@ -70,16 +70,26 @@ app.post("/timetable",verifyFirebaseToken,async(req,res)=>{
   return res.json(table.days);
 });
 
-app.get("/timetable",verifyFirebaseToken,async(req,res)=>{
-  let table = await TableModel.findOne({ createdBy: req.user.uid });
-  if (!table) {
-    // if none exists yet, return empty default
-    table = await TableModel.create({ createdBy: req.user.uid });
+
+app.get('/timetable', verifyFirebaseToken, async (req, res) => {
+  try {
+    // pull date out into a mutable variable and give it a default
+    let date = req.query.date || new Date().toISOString();
+
+    const dayName = new Date(date)
+      .toLocaleDateString('en-US', { weekday: 'long' });
+
+    const table = await TableModel.findOne({ createdBy: req.user.uid });
+    const subjectsForToday = table?.days?.[dayName] || [];
+
+    const stats = { count: subjectsForToday.length };
+
+    return res.json(table.days);
+  } catch (err) {
+    console.error('Timetable fetch error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
-  res.json(table.days);
 });
-
-
 
 
 

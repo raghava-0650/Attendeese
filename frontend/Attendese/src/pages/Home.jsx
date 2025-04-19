@@ -1,11 +1,24 @@
 // src/pages/Home.jsx
-import React, { useEffect, useState } from 'react';
-import Layout from '../components/Layout';
-import { Check, X, Minus, RotateCcw } from 'lucide-react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
 import axios from 'axios';
+import {
+  format,
+  parseISO,
+} from 'date-fns';
 import { getAuth } from 'firebase/auth';
+import {
+  Check,
+  Minus,
+  RotateCcw,
+  X,
+} from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { format, parseISO } from 'date-fns';
+
+import Layout from '../components/Layout';
 
 const auth = getAuth();
 
@@ -27,10 +40,11 @@ const Home = () => {
 
       try {
         const token = await user.getIdToken(true);
-        const response = await axios.get('http://localhost:4000/timetable/today', {
+        const response = await axios.get('http://localhost:4000/timetable', {
           headers: { Authorization: `Bearer ${token}` },
           params: { date: queryDateString } // send date to backend
         });
+        console.log(response);
 
         setTodaySubjects(response.data.subjects);
         setSubjectStats(response.data.stats);
