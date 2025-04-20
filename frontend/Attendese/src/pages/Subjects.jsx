@@ -8,47 +8,73 @@ import { getAuth } from 'firebase/auth';
 
 import Layout from '../components/Layout';
 
-const auth = getAuth();  
+const auth = getAuth();
+// Create an Axios instance pointing to your backend
+const api = axios.create({ baseURL: 'http://localhost:4000' });
+
+// Attach a fresh token on every request
+api.interceptors.request.use(async (config) => {
+  const user = auth.currentUser;
+  if (user) {
+    // will auto-refresh if expired
+    const token = await user.getIdToken(false);
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// On 401-expired, refresh and retry once
+api.interceptors.response.use(
+  (res) => res,
+  async (err) => {
+    const orig = err.config;
+    if (err.response?.status === 401 && !orig._retry) {
+      orig._retry = true;
+      const user = auth.currentUser;
+      if (user) {
+        try {
+          const fresh = await user.getIdToken(true);
+          orig.headers.Authorization = `Bearer ${fresh}`;
+          return api(orig);
+        } catch (e) {
+          console.error('Token refresh failed:', e);
+        }
+      }
+    }
+    return Promise.reject(err);
+  }
+);
 
 const Subjects = () => {
-  const [subjectName, setSubjectName] = useState("");
-  const [attended, setAttended] = useState("");
-  const [absent, setAbsent] = useState("");
-  const [hourDuration, setHourDuration] = useState("");
-  const [note, setNote] = useState("");
+  const [subjectName, setSubjectName] = useState('');
+  const [attended, setAttended] = useState('');
+  const [absent, setAbsent] = useState('');
+  const [hourDuration, setHourDuration] = useState('');
+  const [note, setNote] = useState('');
   const [subjects, setSubjects] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
-  const [editingAttended, setEditingAttended] = useState("");
-  const [editingAbsent, setEditingAbsent] = useState("");
-  const [editingNote, setEditingNote] = useState("");
+  const [editingAttended, setEditingAttended] = useState('');
+  const [editingAbsent, setEditingAbsent] = useState('');
+  const [editingNote, setEditingNote] = useState('');
   const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] = useState(false);
   const [subjectToDelete, setSubjectToDelete] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState("nameAsc");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortOption, setSortOption] = useState('nameAsc');
 
-
+  // Fetch on load
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        setSubjects([]);
-        return;
-      }
+    const unsub = auth.onAuthStateChanged(async (user) => {
+      if (!user) return setSubjects([]);
       try {
-        const token = await auth.currentUser.getIdToken(true);
-        const { data } = await axios.get(
-          'http://localhost:4000/subjects',
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const { data } = await api.get('/subjects');
         setSubjects(data);
-      } catch (err) {
-        console.error('Failed to fetch subjects:', err);
+      } catch (e) {
+        console.error('Fetch subjects failed:', e);
       }
     });
-  
-    return unsubscribe;
+    return unsub;
   }, []);
-  
 
   // Calculate attendance percentage for a subject
   const calculateAttendancePercentage = (attended, absent, hourDuration) => {
@@ -87,119 +113,86 @@ const Subjects = () => {
     else return "green";
   };
 
-  // Handle adding a new subject
   const handleAddSubject = async () => {
     if (!subjectName.trim()) return;
-  
-    // Build the payload
     const payload = {
       name: subjectName.trim(),
       attended: parseInt(attended) || 0,
-      absent:  parseInt(absent)  || 0,
+      absent: parseInt(absent) || 0,
       hourDuration: parseFloat(hourDuration) || 1,
       note: note.trim(),
     };
-  
     try {
-      // Ensure user’s signed in
-      const user = auth.currentUser;
-      if (!user) throw new Error("You must be signed in to add a subject.");
-      
-      // Grab fresh token
-      const token = await user.getIdToken(true);
-      
-      // POST and await the saved document
-      const res = await axios.post(
-        'http://localhost:4000/subjects',
-        payload,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-  
-      // Append the server’s version (with its real _id)
-      setSubjects(prev => [...prev, res.data]);
-  
-    } catch (error) {
-      console.error("Error saving subject:", error);
+      const { data: newSubj } = await api.post('/subjects', payload);
+      setSubjects((prev) => [...prev, newSubj]);
+    } catch (e) {
+      console.error('Add subject error:', e);
     }
-  
-    // Clear form fields
-    setSubjectName("");
-    setAttended("");
-    setAbsent("");
-    setHourDuration("");
-    setNote("");
-    setIsAdding(false);
-  };
-  
-
-  // Handle editing a subject
-  const handleEditSubject = (index) => {
-    const subject = subjects[index];
-    setEditingIndex(index);
-    setEditingAttended(subject.attended);
-    setEditingAbsent(subject.absent);
-    setEditingNote(subject.note || "");
+    // clear inputs
+    setSubjectName(''); setAttended(''); setAbsent(''); setHourDuration(''); setNote(''); setIsAdding(false);
   };
 
-  // Save the edited subject
-  const handleSaveEdit = () => {
-    const updatedSubjects = [...subjects];
-    updatedSubjects[editingIndex] = {
-      ...updatedSubjects[editingIndex],
-      attended: parseInt(editingAttended),
-      absent: parseInt(editingAbsent),
-      total: parseInt(editingAttended) + parseInt(editingAbsent),
-      note: editingNote,
+  const handleSaveEdit = async () => {
+    const orig = subjects[editingIndex];
+    const updates = {
+      attended: parseInt(editingAttended) || 0,
+      absent: parseInt(editingAbsent) || 0,
+      note: editingNote.trim(),
     };
-    setSubjects(updatedSubjects);
-    setEditingIndex(null);
-    setEditingAttended("");
-    setEditingAbsent("");
-    setEditingNote("");
+    try {
+      const { data: updated } = await api.put(`/subjects/${orig._id}`, updates);
+      setSubjects((list) => list.map((s, i) => i === editingIndex ? updated : s));
+      setEditingIndex(null);
+    } catch (e) {
+      console.error('Update subject failed:', e);
+    }
   };
 
-  // Handle deleting a subject
-  const handleDeleteSubject = () => {
-    const updatedSubjects = subjects.filter((_, i) => i !== subjectToDelete);
-    setSubjects(updatedSubjects);
+  const handleDeleteSubject = async () => {
+    const orig = subjects[subjectToDelete];
+    try {
+      await api.delete(`/subjects/${orig._id}`);
+      setSubjects((prev) => prev.filter((_, i) => i !== subjectToDelete));
+    } catch (e) {
+      console.error('Delete subject failed:', e);
+    }
     setIsDeleteConfirmationVisible(false);
   };
+// Delete confirmation actions
+const showDeleteConfirmation = (index) => {
+  setIsDeleteConfirmationVisible(true);
+  setSubjectToDelete(index);
+};
+const hideDeleteConfirmation = () => {
+  setIsDeleteConfirmationVisible(false);
+  setSubjectToDelete(null);
+};
 
-  // Delete confirmation actions
-  const showDeleteConfirmation = (index) => {
-    setIsDeleteConfirmationVisible(true);
-    setSubjectToDelete(index);
-  };
-  const hideDeleteConfirmation = () => {
-    setIsDeleteConfirmationVisible(false);
-    setSubjectToDelete(null);
-  };
+// Filter and sort subjects based on search query and sort option
+const filteredSubjects = subjects.filter(subj =>
+  (subj.name || '').toLowerCase().includes(searchQuery.toLowerCase())
+);
 
-  // Filter and sort subjects based on search query and sort option
-  const filteredSubjects = subjects.filter((subj) =>
-    subj.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+const sortedSubjects = filteredSubjects.sort((a, b) => {
+  if (sortOption === "nameAsc") return a.name.localeCompare(b.name);
+  if (sortOption === "nameDesc") return b.name.localeCompare(a.name);
+  const percA = calculateAttendancePercentage(a.attended, a.absent, a.hourDuration);
+  const percB = calculateAttendancePercentage(b.attended, b.absent, b.hourDuration);
+  if (sortOption === "attendanceAsc") return parseFloat(percA) - parseFloat(percB);
+  if (sortOption === "attendanceDesc") return parseFloat(percB) - parseFloat(percA);
+  return 0;
+});
 
-  const sortedSubjects = filteredSubjects.sort((a, b) => {
-    if (sortOption === "nameAsc") return a.name.localeCompare(b.name);
-    if (sortOption === "nameDesc") return b.name.localeCompare(a.name);
-    const percA = calculateAttendancePercentage(a.attended, a.absent, a.hourDuration);
-    const percB = calculateAttendancePercentage(b.attended, b.absent, b.hourDuration);
-    if (sortOption === "attendanceAsc") return parseFloat(percA) - parseFloat(percB);
-    if (sortOption === "attendanceDesc") return parseFloat(percB) - parseFloat(percA);
-    return 0;
-  });
-
-  const { totalAttendedHours, totalClassesHours, totalPercentage } = calculateTotalValues();
+const { totalAttendedHours, totalClassesHours, totalPercentage } = calculateTotalValues();
 
   return (
     <Layout>
-     <div className="min-h-screen p-6 bg-gray-100">
+      <div className="min-h-screen p-6 bg-gray-100">
       <div className="max-w-3xl mx-auto bg-white shadow-xl rounded-2xl p-6">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-semibold">Subjects</h1>
           <div className="flex items-center space-x-4">
-           
+            <p className="text-gray-600">Total Attendance: {totalPercentage}%</p>
             <button
               onClick={() => setIsAdding(!isAdding)}
               className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
@@ -419,7 +412,6 @@ const Subjects = () => {
       </div>
     </div>
     </Layout>
-   
   );
 };
 

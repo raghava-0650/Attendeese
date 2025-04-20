@@ -28,7 +28,6 @@ const Home = () => {
   const [selectedStatus, setSelectedStatus] = useState({});
 
   const location = useLocation();
-
   const queryDateString = new URLSearchParams(location.search).get('date');
   const selectedDate = queryDateString ? parseISO(queryDateString) : new Date();
   const formattedDisplayDate = format(selectedDate, 'EEEE, dd MMM yyyy');
@@ -40,24 +39,35 @@ const Home = () => {
 
       try {
         const token = await user.getIdToken(true);
-        const response = await axios.get('http://localhost:4000/timetable', {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { date: queryDateString } // send date to backend
-        });
-        console.log(response);
+        // Send date as YYYY-MM-DD string
+        const dateParam = format(selectedDate, 'yyyy-MM-dd');
+        const { data } = await axios.get(
+          'http://localhost:4000/timetable',
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { date: dateParam }
+          }
+        );
+        console.log('🔍 raw timetable data:', data);
 
-        setTodaySubjects(response.data.subjects);
-        setSubjectStats(response.data.stats);
+        // Use selectedDate to derive weekday name, not new Date(null)
+        const dayName = format(selectedDate, 'EEEE');
+        const subjectsForToday = data[dayName] || [];
+        const stats = { count: subjectsForToday.length };
+
+        setTodaySubjects(subjectsForToday);
+        setSubjectStats(stats);
+
       } catch (error) {
-        console.error("Error fetching timetable:", error);
+        console.error('Error fetching timetable:', error);
       }
     };
 
     fetchSubjects();
-  }, [queryDateString]);
+  }, [queryDateString, selectedDate]);
 
   const handleStatusClick = (subject, status) => {
-    setSelectedStatus((prev) => ({
+    setSelectedStatus(prev => ({
       ...prev,
       [subject]: status === 'clear' ? null : status
     }));

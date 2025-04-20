@@ -5,7 +5,8 @@ require('dotenv').config()
 const mongoose = require('mongoose');
 const verifyFirebaseToken = require('./middlewares/verifyFirebaseToken');
 const { SubjectsModel,TableModel } = require('./db');
-const { messaging } = require('firebase-admin');
+const admin  = require('firebase-admin');
+const serviceAccount = require('./attendeese-app-firebase-adminsdk-fbsvc-618a164ca6.json');
 
 // Define routes (you will create detailed routes next)
 
@@ -90,7 +91,6 @@ app.get('/timetable', verifyFirebaseToken, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
 
 
 app.listen(process.env.PORT, () => {
