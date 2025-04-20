@@ -9,21 +9,19 @@ import { getAuth } from 'firebase/auth';
 import Layout from '../components/Layout';
 
 const auth = getAuth();
-// Create an Axios instance pointing to your backend
 const api = axios.create({ baseURL: 'http://localhost:4000' });
 
-// Attach a fresh token on every request
+// Attach token on every request
 api.interceptors.request.use(async (config) => {
   const user = auth.currentUser;
   if (user) {
-    // will auto-refresh if expired
     const token = await user.getIdToken(false);
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// On 401-expired, refresh and retry once
+// Refresh expired tokens and retry once
 api.interceptors.response.use(
   (res) => res,
   async (err) => {
@@ -45,75 +43,73 @@ api.interceptors.response.use(
   }
 );
 
-const Subjects = () => {
+export default function Subjects() {
+  // Form state
   const [subjectName, setSubjectName] = useState('');
   const [attended, setAttended] = useState('');
   const [absent, setAbsent] = useState('');
   const [hourDuration, setHourDuration] = useState('');
   const [note, setNote] = useState('');
+
+  // Data state
   const [subjects, setSubjects] = useState([]);
   const [isAdding, setIsAdding] = useState(false);
   const [editingIndex, setEditingIndex] = useState(null);
   const [editingAttended, setEditingAttended] = useState('');
   const [editingAbsent, setEditingAbsent] = useState('');
   const [editingNote, setEditingNote] = useState('');
-  const [isDeleteConfirmationVisible, setIsDeleteConfirmationVisible] = useState(false);
-  const [subjectToDelete, setSubjectToDelete] = useState(null);
+  const [isDeleteVisible, setIsDeleteVisible] = useState(false);
+  const [toDeleteIndex, setToDeleteIndex] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('nameAsc');
 
-  // Fetch on load
+  // Helpers
+  const calculateAttendancePercentage = (att, abs, hr) => {
+    const total = att + abs;
+    if (total === 0) return 0;
+    return ((att * hr) / (total * hr) * 100).toFixed(2);
+  };
+
+  const calculateTotals = () => {
+    let totAtt = 0, totHr = 0;
+    subjects.forEach(s => {
+      const a = parseFloat(s.attended) || 0;
+      const b = parseFloat(s.absent) || 0;
+      const h = parseFloat(s.hourDuration) || 1;
+      totAtt += a * h;
+      totHr += (a + b) * h;
+    });
+    const perc = totHr === 0 ? 0 : ((totAtt / totHr) * 100).toFixed(2);
+    return { totAtt, totHr, perc };
+  };
+
+  const getColor = perc => {
+    const p = parseFloat(perc);
+    if (p < 75) return 'red';
+    if (p < 90) return 'yellow';
+    return 'green';
+  };
+
+  // Fetch
+  const fetchSubjects = async () => {
+    try {
+      const { data } = await api.get('/subjects');
+      setSubjects(data);
+    } catch (e) {
+      console.error('Fetch failed:', e);
+    }
+  };
+
   useEffect(() => {
-    const unsub = auth.onAuthStateChanged(async (user) => {
-      if (!user) return setSubjects([]);
-      try {
-        const { data } = await api.get('/subjects');
-        setSubjects(data);
-      } catch (e) {
-        console.error('Fetch subjects failed:', e);
-      }
+    const unsub = auth.onAuthStateChanged(user => {
+      if (user) fetchSubjects();
+      else setSubjects([]);
     });
     return unsub;
   }, []);
 
-  // Calculate attendance percentage for a subject
-  const calculateAttendancePercentage = (attended, absent, hourDuration) => {
-    const totalClasses = attended + absent;
-    if (totalClasses === 0) return 0;
-    const totalAttendedHours = attended * hourDuration;
-    const totalClassesHours = totalClasses * hourDuration;
-    return ((totalAttendedHours / totalClassesHours) * 100).toFixed(2);
-  };
-
-  // Calculate total attendance for all subjects
-  const calculateTotalValues = () => {
-    let totalAttendedHours = 0;
-    let totalClassesHours = 0;
-    subjects.forEach((subj) => {
-      const attended = parseFloat(subj.attended || 0);
-      const absent = parseFloat(subj.absent || 0);
-      const hour = parseFloat(subj.hourDuration || 1);
-      totalAttendedHours += attended * hour;
-      totalClassesHours += (attended + absent) * hour;
-    });
-  
-    const totalPercentage = totalClassesHours === 0 
-      ? 0 
-      : ((totalAttendedHours / totalClassesHours) * 100).toFixed(2);
-  
-    return { totalAttendedHours, totalClassesHours, totalPercentage };
-  };
-  
-
-  // Determine color based on attendance percentage
-  const getColor = (percentage) => {
-    const perc = parseFloat(percentage);
-    if (perc < 75) return "red";
-    else if (perc < 90) return "yellow";
-    else return "green";
-  };
-
-  const handleAddSubject = async () => {
+  // Handlers
+  const handleAdd = async () => {
     if (!subjectName.trim()) return;
     const payload = {
       name: subjectName.trim(),
@@ -123,296 +119,135 @@ const Subjects = () => {
       note: note.trim(),
     };
     try {
-      const { data: newSubj } = await api.post('/subjects', payload);
-      setSubjects((prev) => [...prev, newSubj]);
-    } catch (e) {
-      console.error('Add subject error:', e);
-    }
-    // clear inputs
+      await api.post('/subjects', payload);
+      await fetchSubjects();
+    } catch (e) { console.error('Add error:', e); }
     setSubjectName(''); setAttended(''); setAbsent(''); setHourDuration(''); setNote(''); setIsAdding(false);
   };
 
-  const handleSaveEdit = async () => {
+  const startEdit = i => {
+    const s = subjects[i];
+    setEditingIndex(i);
+    setEditingAttended(String(s.attended));
+    setEditingAbsent(String(s.absent));
+    setEditingNote(s.note || '');
+  };
+  const saveEdit = async () => {
     const orig = subjects[editingIndex];
-    const updates = {
-      attended: parseInt(editingAttended) || 0,
-      absent: parseInt(editingAbsent) || 0,
-      note: editingNote.trim(),
-    };
+    const updates = { attended: parseInt(editingAttended)||0, absent: parseInt(editingAbsent)||0, note: editingNote.trim() };
     try {
-      const { data: updated } = await api.put(`/subjects/${orig._id}`, updates);
-      setSubjects((list) => list.map((s, i) => i === editingIndex ? updated : s));
+      const { data: upd } = await api.put(`/subjects/${orig._id}`, updates);
+      setSubjects(list => list.map((s,i)=>i===editingIndex?upd:s));
       setEditingIndex(null);
-    } catch (e) {
-      console.error('Update subject failed:', e);
-    }
+    } catch(e){ console.error('Edit error:',e); }
   };
 
-  const handleDeleteSubject = async () => {
-    const orig = subjects[subjectToDelete];
-    try {
-      await api.delete(`/subjects/${orig._id}`);
-      setSubjects((prev) => prev.filter((_, i) => i !== subjectToDelete));
-    } catch (e) {
-      console.error('Delete subject failed:', e);
-    }
-    setIsDeleteConfirmationVisible(false);
+  const confirmDelete = i => { setToDeleteIndex(i); setIsDeleteVisible(true); };
+  const doDelete = async () => {
+    const orig = subjects[toDeleteIndex];
+    try { await api.delete(`/subjects/${orig._id}`); await fetchSubjects(); }
+    catch(e){ console.error('Delete error:',e); }
+    setIsDeleteVisible(false);
   };
-// Delete confirmation actions
-const showDeleteConfirmation = (index) => {
-  setIsDeleteConfirmationVisible(true);
-  setSubjectToDelete(index);
-};
-const hideDeleteConfirmation = () => {
-  setIsDeleteConfirmationVisible(false);
-  setSubjectToDelete(null);
-};
 
-// Filter and sort subjects based on search query and sort option
-const filteredSubjects = subjects.filter(subj =>
-  (subj.name || '').toLowerCase().includes(searchQuery.toLowerCase())
-);
+  // Filter & sort
+  const filtered = subjects.filter(s => (s.name||'').toLowerCase().includes(searchQuery.toLowerCase()));
+  const sorted = filtered.sort((a,b)=>{
+    if(sortOption==='nameAsc') return a.name.localeCompare(b.name);
+    if(sortOption==='nameDesc') return b.name.localeCompare(a.name);
+    const pa = calculateAttendancePercentage(a.attended,a.absent,a.hourDuration);
+    const pb = calculateAttendancePercentage(b.attended,b.absent,b.hourDuration);
+    return sortOption==='attendanceAsc' ? pa-pb : pb-pa;
+  });
 
-const sortedSubjects = filteredSubjects.sort((a, b) => {
-  if (sortOption === "nameAsc") return a.name.localeCompare(b.name);
-  if (sortOption === "nameDesc") return b.name.localeCompare(a.name);
-  const percA = calculateAttendancePercentage(a.attended, a.absent, a.hourDuration);
-  const percB = calculateAttendancePercentage(b.attended, b.absent, b.hourDuration);
-  if (sortOption === "attendanceAsc") return parseFloat(percA) - parseFloat(percB);
-  if (sortOption === "attendanceDesc") return parseFloat(percB) - parseFloat(percA);
-  return 0;
-});
-
-const { totalAttendedHours, totalClassesHours, totalPercentage } = calculateTotalValues();
+  const { totAtt, totHr, perc } = calculateTotals();
 
   return (
     <Layout>
       <div className="min-h-screen p-6 bg-gray-100">
-      <div className="max-w-3xl mx-auto bg-white shadow-xl rounded-2xl p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-semibold">Subjects</h1>
-          <div className="flex items-center space-x-4">
-            <p className="text-gray-600">Total Attendance: {totalPercentage}%</p>
-            <button
-              onClick={() => setIsAdding(!isAdding)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
-            >
-              {isAdding ? "Cancel" : "Add Subject"}
-            </button>
-          </div>
-        </div>
-
-        {isAdding && (
-          <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4 text-center">Add Subject</h2>
-            <input
-              type="text"
-              placeholder="Subject Name"
-              value={subjectName}
-              onChange={(e) => setSubjectName(e.target.value)}
-              autoFocus
-              className="w-full p-2 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <textarea
-              placeholder="Optional Note (e.g., exam schedule, teacher info)"
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              className="w-full p-2 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <div className="grid grid-cols-2 gap-4 mb-3">
-              <input
-                type="number"
-                placeholder="Classes Attended (default 0)"
-                value={attended}
-                onChange={(e) => setAttended(e.target.value)}
-                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-              />
-              <input
-                type="number"
-                placeholder="Classes Absent (default 0)"
-                value={absent}
-                onChange={(e) => setAbsent(e.target.value)}
-                className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
-              />
+        <div className="max-w-3xl mx-auto bg-white shadow-xl rounded-2xl p-6">
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-2xl font-semibold">Subjects</h1>
+            <div className="flex items-center space-x-4">
+              <p className="text-gray-600">Total Attendance: {perc}%</p>
+              <button onClick={()=>setIsAdding(!isAdding)} className="bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition">
+                {isAdding?'Cancel':'Add Subject'}
+              </button>
             </div>
-            <input
-              type="number"
-              placeholder="Hour Duration per Class (default 1)"
-              value={hourDuration}
-              onChange={(e) => setHourDuration(e.target.value)}
-              className="w-full p-2 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <button
-              onClick={handleAddSubject}
-              className="w-full bg-blue-600 text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition"
-            >
-              Add Subject
-            </button>
           </div>
-        )}
 
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between">
-          <div className="mb-4 sm:mb-0">
-            <input
-              type="text"
-              placeholder="Search subjects..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="p-2 border rounded-lg w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          <div>
-            <select
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value)}
-              className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="nameAsc">Name Ascending</option>
-              <option value="nameDesc">Name Descending</option>
-              <option value="attendanceAsc">Attendance Ascending</option>
-              <option value="attendanceDesc">Attendance Descending</option>
+          {isAdding && (
+            <div className="bg-white rounded-2xl shadow-xl p-6 mb-6">
+              {/* Add form fields */}
+              <input type="text" placeholder="Name" value={subjectName} onChange={e=>setSubjectName(e.target.value)} className="w-full p-2 border rounded-lg mb-3" />
+              <textarea placeholder="Note" value={note} onChange={e=>setNote(e.target.value)} className="w-full p-2 border rounded-lg mb-3" />
+              <div className="grid grid-cols-2 gap-4 mb-3">
+                <input type="number" placeholder="Attended" value={attended} onChange={e=>setAttended(e.target.value)} className="p-2 border rounded-lg" />
+                <input type="number" placeholder="Absent" value={absent} onChange={e=>setAbsent(e.target.value)} className="p-2 border rounded-lg" />
+              </div>
+              <input type="number" placeholder="Hours/class" value={hourDuration} onChange={e=>setHourDuration(e.target.value)} className="w-full p-2 border rounded-lg mb-4" />
+              <button onClick={handleAdd} className="w-full bg-green-600 text-white px-4 py-2 rounded-xl">Add</button>
+            </div>
+          )}
+
+          {/* Search & Sort */}
+          <div className="mb-6 flex justify-between">
+            <input type="text" placeholder="Search..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} className="p-2 border rounded-lg w-1/2" />
+            <select value={sortOption} onChange={e=>setSortOption(e.target.value)} className="p-2 border rounded-lg">
+              <option value="nameAsc">Name ↑</option>
+              <option value="nameDesc">Name ↓</option>
+              <option value="attendanceAsc">Attendance ↑</option>
+              <option value="attendanceDesc">Attendance ↓</option>
             </select>
           </div>
-        </div>
 
-        <div className="bg-white rounded-2xl shadow-md p-4 border-l-4 border-blue-500 mb-6">
-          <h2 className="text-xl font-bold text-gray-800">Total</h2>
-          <p className="text-gray-600">
-            Total Hours Attended: <span className="font-medium">{totalAttendedHours}</span>
-          </p>
-          <p className="text-gray-600">
-            Total Hours Conducted: <span className="font-medium">{totalClassesHours}</span>
-          </p>
-          <p className="text-gray-600">
-            Total Attendance Percentage:{" "}
-            <span className="font-medium">{totalPercentage}%</span>
-          </p>
-        </div>
+          {/* Totals */}
+          <div className="bg-gray-50 rounded-2xl shadow-md p-4 border-l-4 border-blue-500 mb-6">
+            <p>Total Hours Attended: {totAtt}</p>
+            <p>Total Hours Conducted: {totHr}</p>
+            <p>Total Attendance %: {perc}%</p>
+          </div>
 
-        <div className="mt-8 space-y-4">
-          {sortedSubjects.length > 0 ? (
-            sortedSubjects.map((subj, index) => {
-              const attendancePercentage = calculateAttendancePercentage(
-                subj.attended,
-                subj.absent,
-                subj.hourDuration
-              );
-              const color = getColor(attendancePercentage);
-              const borderColor =
-                color === "red"
-                  ? "border-red-500"
-                  : color === "yellow"
-                  ? "border-yellow-500"
-                  : "border-green-500";
-              const progressBarColor =
-                color === "red"
-                  ? "bg-red-500"
-                  : color === "yellow"
-                  ? "bg-yellow-500"
-                  : "bg-green-500";
-              return (
-                <div key={index} className={`bg-white rounded-2xl shadow-md p-4 border-l-4 ${borderColor}`}>
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-xl font-bold text-gray-800">{subj.name}</h2>
-                    {subj.note && <span className="text-sm text-gray-500 italic">{subj.note}</span>}
+          {/* Subject list */}
+          <div className="space-y-4">
+            {sorted.length ? sorted.map((s,i)=>(
+              <div key={i} className={`bg-white p-4 rounded-2xl shadow-md border-l-4 ${['border-red-500','border-yellow-500','border-green-500'][['red','yellow','green'].indexOf(getColor(calculateAttendancePercentage(s.attended,s.absent,s.hourDuration)))]}`}>
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-bold">{s.name}</h2>
+                  <div className="flex space-x-2">
+                    <button onClick={()=>startEdit(i)} className="text-blue-600">Edit</button>
+                    <button onClick={()=>confirmDelete(i)} className="text-red-600">Delete</button>
                   </div>
-                  <p className="text-gray-600">
-                    Classes Attended: <span className="font-medium">{subj.attended}</span>
-                  </p>
-                  <p className="text-gray-600">
-                    Classes Absent: <span className="font-medium">{subj.absent}</span>
-                  </p>
-                  <p className="text-gray-600">
-                    Total Classes: <span className="font-medium">{subj.total}</span>
-                  </p>
-                  <p className="text-gray-600">
-                    Hour Duration per Class: <span className="font-medium">{subj.hourDuration}</span>
-                  </p>
-                  <p className="text-gray-600">
-                    Attendance Percentage: <span className="font-medium">{attendancePercentage}%</span>
-                  </p>
-                  <div className="w-full bg-gray-200 rounded-full h-3 my-2">
-                    <div className={`h-3 rounded-full ${progressBarColor}`} style={{ width: `${attendancePercentage}%` }}></div>
-                  </div>
-                  <div className="flex justify-end space-x-4 mt-2">
-                    <button
-                      onClick={() => handleEditSubject(index)}
-                      className="text-blue-600 hover:text-blue-800 transition"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => showDeleteConfirmation(index)}
-                      className="text-red-600 hover:text-red-800 transition"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                  {editingIndex === index && (
-                    <div className="mt-4">
-                      <input
-                        type="number"
-                        placeholder="Edit Classes Attended"
-                        value={editingAttended}
-                        onChange={(e) => setEditingAttended(e.target.value)}
-                        className="p-2 border rounded-lg mb-3 w-full focus:outline-none focus:ring-2 focus:ring-green-500"
-                      />
-                      <input
-                        type="number"
-                        placeholder="Edit Classes Absent"
-                        value={editingAbsent}
-                        onChange={(e) => setEditingAbsent(e.target.value)}
-                        className="p-2 border rounded-lg mb-3 w-full focus:outline-none focus:ring-2 focus:ring-red-500"
-                      />
-                      <textarea
-                        placeholder="Edit Note (optional)"
-                        value={editingNote}
-                        onChange={(e) => setEditingNote(e.target.value)}
-                        className="p-2 border rounded-lg mb-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      ></textarea>
-                      <button
-                        onClick={handleSaveEdit}
-                        className="w-full bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition"
-                      >
-                        Save Changes
-                      </button>
-                    </div>
-                  )}
                 </div>
-              );
-            })
-          ) : (
-            <p className="text-center text-gray-600">No subjects found.</p>
-          )}
+                <p>Attended: {s.attended}</p>
+                <p>Absent: {s.absent}</p>
+                <p>%: {calculateAttendancePercentage(s.attended,s.absent,s.hourDuration)}%</p>
+                {editingIndex===i && (
+                  <div className="mt-2 space-y-2">
+                    <input type="number" value={editingAttended} onChange={e=>setEditingAttended(e.target.value)} className="w-full p-2 border rounded-lg" />
+                    <input type="number" value={editingAbsent} onChange={e=>setEditingAbsent(e.target.value)} className="w-full p-2 border rounded-lg" />
+                    <textarea value={editingNote} onChange={e=>setEditingNote(e.target.value)} className="w-full p-2 border rounded-lg" />
+                    <button onClick={saveEdit} className="w-full bg-blue-600 text-white px-4 py-2 rounded-xl">Save</button>
+                  </div>
+                )}
+              </div>
+            )) : <p className="text-center text-gray-600">No subjects found.</p>}
+          </div>
         </div>
 
-        {isDeleteConfirmationVisible && (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-700 bg-opacity-50 transition-opacity duration-300">
-            <div className="bg-white p-6 rounded-xl shadow-xl w-96">
-              <h3 className="text-lg font-semibold">
-                Are you sure you want to delete this subject?
-              </h3>
-              <div className="flex justify-end mt-4">
-                <button
-                  onClick={hideDeleteConfirmation}
-                  className="mr-4 text-gray-600 hover:text-gray-800 transition"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteSubject}
-                  className="bg-red-600 text-white px-4 py-2 rounded-xl hover:bg-red-700 transition"
-                >
-                  Delete
-                </button>
+        {/* Delete confirmation */}
+        {isDeleteVisible && (
+          <div className="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center justify-center">
+            <div className="bg-white p-6 rounded-xl">
+              <p>Are you sure you want to delete "{subjects[toDeleteIndex]?.name}"?</p>
+              <div className="flex justify-end mt-4 space-x-4">
+                <button onClick={()=>setIsDeleteVisible(false)} className="px-4 py-2">Cancel</button>
+                <button onClick={doDelete} className="px-4 py-2 bg-red-600 text-white rounded">Delete</button>
               </div>
             </div>
           </div>
         )}
       </div>
-    </div>
     </Layout>
   );
-};
-
-export default Subjects;
+}
