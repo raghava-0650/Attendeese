@@ -62,33 +62,86 @@ app.get("/subjects",verifyFirebaseToken,async(req,res)=>{
   }
 });
 
-app.post("/timetable",verifyFirebaseToken,async(req,res)=>{
-  const { days } = req.body;
-  let table = await TableModel.findOneAndUpdate({ createdBy:req.user.uid },
-    { days },
-    { new: true, upsert: true }
-  )
-  return res.json(table.days);
+app.delete("/subjects/:id", verifyFirebaseToken, async (req, res) => {
+  try {
+    const deleted = await SubjectsModel.findOneAndDelete({
+      _id: req.params.id,
+      createdBy: req.user.uid
+    });
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Subject not found" });
+    }
+
+    res.json({ message: "Subject deleted successfully" });
+  } catch (error) {
+    console.error("Delete error:", error);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
+// in server.js (or routes/subjects.js)
+app.put('/subjects/:id/attendance', verifyFirebaseToken, async (req, res) => {
+  const { id }   = req.params;
+  const { type } = req.body;           // 'present'|'undoPresent'|'absent'|'undoAbsent'
+
+  // Map the incoming “type” to a $inc operation
+  let incOp;
+  switch (type) {
+    case 'present':     incOp = { attended:  1 }; break;
+    case 'undoPresent': incOp = { attended: -1 }; break;
+    case 'absent':      incOp = { absent:    1 }; break;
+    case 'undoAbsent':  incOp = { absent:   -1 }; break;
+    default:
+      return res.status(400).json({ error: 'Invalid type' });
+  }
+
+  try {
+    const updated = await SubjectsModel.findOneAndUpdate(
+      { _id: id, createdBy: req.user.uid },
+      { $inc: incOp },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ error: 'Subject not found' });
+    res.json(updated);
+  } catch (err) {
+    console.error('Attendance update error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+app.post('/timetable', verifyFirebaseToken, async (req, res) => {
+  try {
+    const { days } = req.body;
+    if (!days || typeof days !== 'object') {
+      return res.status(400).json({ message: 'Invalid payload: days object required' });
+    }
+
+    // Upsert the timetable document for this user
+    const table = await TableModel.findOneAndUpdate(
+      { createdBy: req.user.uid },
+      { $set: { days } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+
+    // Return only the days object, if that's all the client needs
+    return res.json(table.days);
+  } catch (err) {
+    console.error('Error saving timetable:', err);
+    return res.status(500).json({ message: 'Could not save timetable', error: err.message });
+  }
+});
 
 app.get('/timetable', verifyFirebaseToken, async (req, res) => {
   try {
-    // pull date out into a mutable variable and give it a default
     let date = req.query.date || new Date().toISOString();
-
-    const dayName = new Date(date)
-      .toLocaleDateString('en-US', { weekday: 'long' });
-
+    const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'long' });
     const table = await TableModel.findOne({ createdBy: req.user.uid });
-    const subjectsForToday = table?.days?.[dayName] || [];
-
-    const stats = { count: subjectsForToday.length };
-
+    const entries = table?.days?.[dayName] || [];
     return res.json(table.days);
   } catch (err) {
     console.error('Timetable fetch error:', err);
-    res.status(500).json({ message: 'Server error' });
+    return res.status(500).json({ message: 'Server error' });
   }
 });
 

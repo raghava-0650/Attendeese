@@ -20,7 +20,7 @@ import logo from '../assets/logo.png';
 
 const auth = getAuth();
 
-const Layout = ({ children }) => {
+const Layout = ({ children, subjects, totals }) => {
   const [totalAttendance, setTotalAttendance] = useState(null);
   const [showSidebar, setShowSidebar] = useState(false);
   const navigate = useNavigate();

@@ -4,6 +4,9 @@ const Schema = mongoose.Schema;
 // const ObjectId = Schema.ObjectId;
 
 const TableSchema = new Schema({
+
+    createdBy: { type: String, required: true },
+
     days:{
         Monday:    { type: [String], default: [] },
         Tuesday:   { type: [String], default: [] },
@@ -12,7 +15,7 @@ const TableSchema = new Schema({
         Friday:    { type: [String], default: [] },
         Saturday:  { type: [String], default: [] },
     },
-    createdBy: { type: String, required: true },
+    
 })
 
 const Subjects = new Schema({
@@ -38,13 +41,10 @@ const Subjects = new Schema({
         trim: true,
         default: ''
     },
-
     createdBy:{
         type:String,
         required: true,
     }
-
-
 },
 {
     timestamps: true,
